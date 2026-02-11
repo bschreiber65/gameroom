@@ -79,16 +79,7 @@ export default function LobbyPage() {
 
     // Notify the inviter
     const channel = supabase.channel(`user:${from_user_id}`)
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.send({
-          type: 'broadcast',
-          event: 'game_created',
-          payload: { game_id, redirect: true },
-        })
-        supabase.removeChannel(channel)
-      }
-    })
+    channel.httpSend('game_created', { game_id, redirect: true }).catch(() => {})
 
     clearInvitation()
     navigate(`/game/${game_id}`)
@@ -105,16 +96,7 @@ export default function LobbyPage() {
 
     // Notify inviter
     const channel = supabase.channel(`user:${pendingInvitation.from_user_id}`)
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.send({
-          type: 'broadcast',
-          event: 'invitation_response',
-          payload: { from_user_id: user.id, declined: true, name: profile?.name },
-        })
-        supabase.removeChannel(channel)
-      }
-    })
+    channel.httpSend('invitation_response', { from_user_id: user.id, declined: true, name: profile?.name }).catch(() => {})
 
     clearInvitation()
   }

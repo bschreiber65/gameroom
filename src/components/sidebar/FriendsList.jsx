@@ -70,20 +70,11 @@ export default function FriendsList() {
 
     // Broadcast invitation via user channel
     const channel = supabase.channel(`user:${inviteTarget.id}`)
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.send({
-          type: 'broadcast',
-          event: 'invitation_received',
-          payload: {
-            from_user_id: user.id,
-            from_name: user.user_metadata?.name || 'Someone',
-            game_id: game.id,
-          },
-        })
-        supabase.removeChannel(channel)
-      }
-    })
+    channel.httpSend('invitation_received', {
+      from_user_id: user.id,
+      from_name: user.user_metadata?.name || 'Someone',
+      game_id: game.id,
+    }).catch(() => {})
 
     setInviteTarget(null)
   }

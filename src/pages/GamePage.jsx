@@ -132,10 +132,6 @@ export default function GamePage() {
       { user_id: user.id, friend_id: friendId },
       { onConflict: 'user_id,friend_id' }
     )
-    await supabase.from('friendships').upsert(
-      { user_id: friendId, friend_id: user.id },
-      { onConflict: 'user_id,friend_id' }
-    )
   }
 
   async function handleCardClick(position) {
@@ -260,16 +256,7 @@ export default function GamePage() {
       // Notify opponent
       if (opponentId) {
         const channel = supabase.channel(`user:${opponentId}`)
-        channel.subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            await channel.send({
-              type: 'broadcast',
-              event: 'game_created',
-              payload: { game_id: game.id, redirect: true },
-            })
-            supabase.removeChannel(channel)
-          }
-        })
+        channel.httpSend('game_created', { game_id: game.id, redirect: true }).catch(() => {})
       }
       navigate(`/game/${game.id}`)
     }

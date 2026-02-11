@@ -76,11 +76,7 @@ export function useGameChannel(gameId, dispatch) {
 
   function broadcast(event, payload) {
     if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event,
-        payload: { ...payload, userId: user?.id },
-      })
+      channelRef.current.httpSend(event, { ...payload, userId: user?.id }).catch(() => {})
     }
   }
 
