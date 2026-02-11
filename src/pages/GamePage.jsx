@@ -350,7 +350,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="max-w-4xl mx-auto space-y-4">
       {/* Game header toolbar */}
       <GameHeader
         onSwapTurn={handleSwapTurn}

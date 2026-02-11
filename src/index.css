@@ -88,3 +88,9 @@ body {
 .animate-message-blink {
   animation: message-blinker 1s linear 4;
 }
+
+/* Buttons */
+button.rounded {
+  display: flex;
+  cursor: pointer;
+}
