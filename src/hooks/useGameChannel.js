@@ -70,7 +70,7 @@ export function useGameChannel(gameId, dispatch) {
     channelRef.current = channel
 
     return () => {
-      supabase.removeChannel(channel)
+      channel.unsubscribe()
     }
   }, [gameId, user?.id])
 

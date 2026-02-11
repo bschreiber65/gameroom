@@ -130,7 +130,7 @@ export default function GamePage() {
     if (!friendId || friendId === user.id) return
     await supabase.from('friendships').upsert(
       { user_id: user.id, friend_id: friendId },
-      { onConflict: 'user_id,friend_id' }
+      { onConflict: 'user_id,friend_id', ignoreDuplicates: true }
     )
   }
 
