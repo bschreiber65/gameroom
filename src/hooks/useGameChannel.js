@@ -37,6 +37,12 @@ export function useGameChannel(gameId, dispatch) {
       dispatch({ type: 'CARDS_UNLOCKED' })
     })
 
+    channel.on('broadcast', { event: 'guessing_ended' }, ({ payload }) => {
+      if (payload.userId !== user.id) {
+        dispatch({ type: 'GUESSING_ENDED', payload })
+      }
+    })
+
     channel.on('broadcast', { event: 'player_joined' }, ({ payload }) => {
       dispatch({ type: 'PLAYER_JOINED', payload })
     })

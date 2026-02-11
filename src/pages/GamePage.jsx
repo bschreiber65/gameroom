@@ -48,6 +48,7 @@ export default function GamePage() {
   const gameOver = gameState.status === GAME_STATUS.WIN || gameState.status === GAME_STATUS.LOSS
   const canSubmitClue = isMyTurn && gameState.card_lock
   const canClickCards = isMyTurn && !gameState.card_lock && gameState.clue_count > 0
+  const canEndGuessing = isMyTurn && !gameState.card_lock && gameState.clue_count > 0
 
   // Load game data
   useEffect(() => {
@@ -224,6 +225,20 @@ export default function GamePage() {
     await supabase.from('games').update({ card_lock: false }).eq('id', gameId)
   }
 
+  async function handleEndGuessing() {
+    const playerName = capitalize(profile?.name || 'Player')
+    dispatch({ type: 'GUESSING_ENDED', payload: { playerName } })
+    broadcast('guessing_ended', { playerName })
+
+    await supabase.from('games').update({
+      card_lock: true,
+      event_log: [
+        ...gameState.event_log,
+        { type: 'system', text: `${playerName} ended guessing.` },
+      ],
+    }).eq('id', gameId)
+  }
+
   async function handleEndGame() {
     const payload = { status: GAME_STATUS.LOSS, reason: 'Game ended by player.' }
     dispatch({ type: 'GAME_ENDED', payload })
@@ -374,7 +389,9 @@ export default function GamePage() {
             gameState={gameState}
             isMyTurn={isMyTurn}
             canSubmitClue={canSubmitClue}
+            canEndGuessing={canEndGuessing}
             onClueSubmit={handleClueSubmit}
+            onEndGuessing={handleEndGuessing}
           />
         </div>
       </div>

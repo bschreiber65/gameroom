@@ -155,6 +155,17 @@ export function gameReducer(state, action) {
       return { ...state, card_lock: false }
     }
 
+    case 'GUESSING_ENDED': {
+      return {
+        ...state,
+        card_lock: true,
+        event_log: [
+          ...state.event_log,
+          { type: 'system', text: `${action.payload.playerName} ended guessing.` },
+        ],
+      }
+    }
+
     case 'PLAYER_JOINED': {
       const { player2_id } = action.payload
       return {
