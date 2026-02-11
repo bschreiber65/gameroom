@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, withTimeout } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { useNotificationChannel } from '../hooks/useNotificationChannel'
 import { GAME_STATUS } from '../lib/constants'
@@ -21,23 +21,36 @@ export default function LobbyPage() {
   const navigate = useNavigate()
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const { pendingInvitation, clearInvitation } = useNotificationChannel()
   const [invitationLoading, setInvitationLoading] = useState(false)
 
   useEffect(() => {
     loadGames()
-  }, [user])
+  }, [user?.id])
 
   async function loadGames() {
-    const { data } = await supabase
-      .from('games')
-      .select('id, status, created_at, player1:profiles!games_player1_id_fkey(name), player2:profiles!games_player2_id_fkey(name)')
-      .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
-      .order('created_at', { ascending: false })
-      .limit(20)
+    if (!user) return
+    console.log('loadGames: starting for user', user.id)
+    try {
+      const { data, error: queryError } = await withTimeout(
+        supabase
+          .from('games')
+          .select('id, status, created_at, player1:profiles!games_player1_id_fkey(name), player2:profiles!games_player2_id_fkey(name)')
+          .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      )
 
-    if (data) setGames(data)
-    setLoading(false)
+      if (queryError) throw queryError
+      console.log('loadGames: success,', (data || []).length, 'games')
+      setGames(data || [])
+    } catch (err) {
+      console.error('loadGames: error', err)
+      setError('Unable to load games')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleAcceptInvitation() {
@@ -120,6 +133,13 @@ export default function LobbyPage() {
 
       {loading ? (
         <p className="text-muted">Loading games...</p>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-400 mb-4">{error}</p>
+          <Button onClick={() => { setLoading(true); setError(null); loadGames() }}>
+            Retry
+          </Button>
+        </div>
       ) : games.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted mb-4">No games yet. Create one to get started!</p>

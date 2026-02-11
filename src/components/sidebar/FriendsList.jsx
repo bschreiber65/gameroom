@@ -24,13 +24,17 @@ export default function FriendsList() {
   }, [user])
 
   async function loadFriends() {
-    const { data } = await supabase
-      .from('friendships')
-      .select('friend_id, friend:profiles!friendships_friend_id_fkey(id, name)')
-      .eq('user_id', user.id)
+    try {
+      const { data } = await supabase
+        .from('friendships')
+        .select('friend_id, friend:profiles!friendships_friend_id_fkey(id, name)')
+        .eq('user_id', user.id)
 
-    if (data) {
-      setFriends(data.map(f => f.friend))
+      if (data) {
+        setFriends(data.map(f => f.friend))
+      }
+    } catch {
+      // silent — sidebar shows empty friends message
     }
   }
 

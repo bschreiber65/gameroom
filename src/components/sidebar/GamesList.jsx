@@ -22,14 +22,18 @@ export default function GamesList() {
   }, [user])
 
   async function loadGames() {
-    const { data } = await supabase
-      .from('games')
-      .select('id, status, created_at, player1:profiles!games_player1_id_fkey(name), player2:profiles!games_player2_id_fkey(name)')
-      .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
-      .order('created_at', { ascending: false })
-      .limit(10)
+    try {
+      const { data } = await supabase
+        .from('games')
+        .select('id, status, created_at, player1:profiles!games_player1_id_fkey(name), player2:profiles!games_player2_id_fkey(name)')
+        .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
+        .order('created_at', { ascending: false })
+        .limit(10)
 
-    if (data) setGames(data)
+      if (data) setGames(data)
+    } catch {
+      // silent — sidebar shows "No games yet."
+    }
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase, withTimeout } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { useChatSubscription } from '../../hooks/useChatSubscription'
 import { Send, ChevronDown, ChevronUp } from 'lucide-react'
@@ -17,20 +17,24 @@ export default function ChatPanel({ onUnreadChange, gameId }) {
   }, [gameId])
 
   async function loadMessages() {
-    let query = supabase
-      .from('messages')
-      .select('*, sender:profiles!messages_user_id_fkey(name)')
-      .order('created_at', { ascending: true })
-      .limit(50)
+    try {
+      let query = supabase
+        .from('messages')
+        .select('*, sender:profiles!messages_user_id_fkey(name)')
+        .order('created_at', { ascending: true })
+        .limit(50)
 
-    if (gameId) {
-      query = query.eq('game_id', gameId)
-    } else {
-      query = query.is('game_id', null)
+      if (gameId) {
+        query = query.eq('game_id', gameId)
+      } else {
+        query = query.is('game_id', null)
+      }
+
+      const { data } = await withTimeout(query)
+      if (data) setMessages(data)
+    } catch {
+      // silent — chat shows "No messages yet."
     }
-
-    const { data } = await query
-    if (data) setMessages(data)
   }
 
   // Subscribe to new messages

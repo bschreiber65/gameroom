@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, withTimeout } from '../lib/supabase'
 
 export const AuthContext = createContext(null)
 
@@ -9,20 +9,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   async function loadProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    setProfile(data)
+    try {
+      const { data } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
+      )
+      setProfile(data)
+    } catch {
+      setProfile(null)
+    }
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const timeout = setTimeout(() => setLoading(false), 5000)
+
+    withTimeout(supabase.auth.getSession()).then(({ data: { session } }) => {
+      clearTimeout(timeout)
       setSession(session)
       if (session?.user) {
         loadProfile(session.user.id)
       }
+      setLoading(false)
+    }).catch(() => {
+      clearTimeout(timeout)
       setLoading(false)
     })
 
@@ -38,7 +50,10 @@ export function AuthProvider({ children }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   async function signUp(email, password, name) {
